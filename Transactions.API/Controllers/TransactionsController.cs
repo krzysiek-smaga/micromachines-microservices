@@ -1,11 +1,12 @@
-﻿using Codecool.MicroMachines.Services.Data.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Transactions.API.Services;
+using Newtonsoft.Json;
+using Common.Models;
 
 namespace Transactions.API.Controllers
 {
@@ -14,18 +15,18 @@ namespace Transactions.API.Controllers
     public class TransactionsController : ControllerBase
     {
         private readonly ILogger<TransactionsController> _logger;
-        private readonly IUserRepository _userRepository;
-        private readonly IProductRepository _productRepository;
+        //private readonly IUserRepository _userRepository;
+        //private readonly IProductRepository _productRepository;
         private readonly ITransactionRepository _transactionRepository;
         private readonly IAccountRepository _accountRepository;
 
-        public TransactionsController(ILogger<TransactionsController> logger, IUserRepository userRepository,
-            IProductRepository productRepository, ITransactionRepository transactionRepository,
+        public TransactionsController(ILogger<TransactionsController> logger, /*IUserRepository userRepository,
+            IProductRepository productRepository,*/ ITransactionRepository transactionRepository,
             IAccountRepository accountRepository)
         {
             _logger = logger;
-            _userRepository = userRepository;
-            _productRepository = productRepository;
+            //_userRepository = userRepository;
+            //_productRepository = productRepository;
             _transactionRepository = transactionRepository;
             _accountRepository = accountRepository;
         }
@@ -110,6 +111,11 @@ namespace Transactions.API.Controllers
 
             accountFrom.Balance -= amount;
             accountTo.Balance += amount;
+
+            _accountRepository.Edit(accountFrom);
+            _accountRepository.Edit(accountTo);
+            _accountRepository.Save();
+
             transaction.Status = TransactionStatus.Confirmed;
 
             _transactionRepository.Add(transaction);
@@ -118,6 +124,23 @@ namespace Transactions.API.Controllers
             return CreatedAtAction(nameof(Get), new { id = transaction.ID }, transaction);
         }
 
+        [HttpGet]
+        [Route("usertransactions/{userId}")]
+        public ActionResult<IEnumerable<Transaction>> GetUserTransactions(Guid userId)
+        {
+            var userAccounts = _accountRepository.GetAll().Where(x => x.UserID == userId);
+            if (userAccounts == null)
+            {
+                return BadRequest("This user doesn't have account or wrong user ID");
+            }
 
+            var userTransactions = _transactionRepository.GetAll().Where(x => userAccounts.Any(y => y.ID == x.AccountToID || y.ID == x.AccountFromID));
+            if (userTransactions == null)
+            {
+                return BadRequest("This user doesn't have transaction yet");
+            }
+
+            return Ok(userTransactions);
+        }
     }
 }

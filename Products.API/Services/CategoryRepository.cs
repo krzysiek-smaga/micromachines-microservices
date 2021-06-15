@@ -1,13 +1,12 @@
 ﻿using Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Products.API.Data;
-using Products.API.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Codecool.MicroMachines.Services.Services
+namespace Products.API.Services
 {
     public class CategoryRepository : ICategoryRepository
     {

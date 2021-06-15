@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Codecool.MicroMachines.Services.Services
+namespace Orders.API.Services
 {
     public class OrderRepository : IOrderRepository
     {

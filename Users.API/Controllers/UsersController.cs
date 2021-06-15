@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Common.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Users.API.Services;
+using Newtonsoft.Json;
 
 namespace Users.API.Controllers
 {
@@ -13,6 +16,7 @@ namespace Users.API.Controllers
     {
         private readonly ILogger<UsersController> _logger;
         private readonly IUserRepository _userRepository;
+        private HttpClient _httpClient;
 
         public UsersController(ILogger<UsersController> logger, IUserRepository userRepository)
         {
@@ -63,30 +67,52 @@ namespace Users.API.Controllers
 
         [HttpGet]
         [Route("{id}/orders")]
-        public ActionResult<IEnumerable<Order>> GetUserOrders(Guid id)
+        public async Task<ActionResult<IEnumerable<Order>>> GetUserOrders(Guid id)
         {
-            return Ok(_userRepository.GetOrders(id));
+            string url = "http://localhost:50629/orders/userorders/" + id;
+
+            _httpClient = new HttpClient();
+
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Ok(JsonConvert.DeserializeObject<IEnumerable<Order>>(content));
+            }
+
+            return BadRequest();
         }
 
-        [HttpGet]
-        [Route("{id}/balance")]
-        public ActionResult<IEnumerable<Order>> GetUserBalance(Guid id)
-        {
-            return Ok(_userRepository.GetUserBalance(id));
-        }
+        //[HttpGet]
+        //[Route("{id}/balance")]
+        //public ActionResult<IEnumerable<Order>> GetUserBalance(Guid id)
+        //{
+        //    return Ok(_userRepository.GetUserBalance(id));
+        //}
 
-        [HttpGet]
-        [Route("{id}/products")]
-        public ActionResult<IEnumerable<Order>> GetUserProducts(Guid id)
-        {
-            return Ok(_userRepository.GetProducts(id));
-        }
+        //[HttpGet]
+        //[Route("{id}/products")]
+        //public ActionResult<IEnumerable<Order>> GetUserProducts(Guid id)
+        //{
+        //    return Ok(_userRepository.GetProducts(id));
+        //}
 
         [HttpGet]
         [Route("{id}/transactions")]
-        public ActionResult<decimal> GetUserTransactions(Guid id)
+        public async Task<ActionResult<IEnumerable<Transaction>>> GetUserTransactions(Guid id)
         {
-            return Ok(_userRepository.GetTransactionHistory(id));
+            string url = "http://localhost:64634/transactions/usertransactions/" + id;
+
+            _httpClient = new HttpClient();
+
+            var response = await _httpClient.GetAsync(url);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Ok(JsonConvert.DeserializeObject<IEnumerable<Transaction>>(content));
+            }
+
+            return BadRequest();
         }
 
         [HttpPut]

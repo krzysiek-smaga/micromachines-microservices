@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Products.API.Services;
+using Common.Models;
 
 namespace Products.API.Controllers
 {
@@ -14,12 +17,15 @@ namespace Products.API.Controllers
         private readonly ILogger<ProductsController> _logger;
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IStockRepository _stockRepository;
 
-        public ProductsController(ILogger<ProductsController> logger, IProductRepository productRepository, ICategoryRepository categoryRepository)
+        public ProductsController(ILogger<ProductsController> logger, IProductRepository productRepository, ICategoryRepository categoryRepository,
+            IStockRepository stockRepository)
         {
             _logger = logger;
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
+            _stockRepository = stockRepository;
         }
 
         [HttpGet]
@@ -45,14 +51,20 @@ namespace Products.API.Controllers
         [HttpPost]
         public ActionResult<Product> Create([FromBody] Product product)
         {
-            return Ok(_productRepository.Add(product));
+            _productRepository.Add(product);
+            _productRepository.Save();
+
+            return Ok(product);
         }
 
         [HttpPut]
         [Route("{id}")]
         public ActionResult<Product> Update([FromBody] Product product)
         {
-            return Ok(_productRepository.Edit(product));
+            _productRepository.Edit(product);
+            _productRepository.Save();
+
+            return Ok(product);
         }
 
         [HttpDelete]
@@ -60,8 +72,16 @@ namespace Products.API.Controllers
         public ActionResult Remove(Guid id)
         {
             _productRepository.Delete(_productRepository.GetSingle(u => u.ID == id));
+            _productRepository.Save();
 
             return NoContent();
+        }
+
+        [HttpGet]
+        [Route("stocks")]
+        public ActionResult<IEnumerable<Stock>> GetStocks()
+        {
+            return Ok(_stockRepository.GetAll());
         }
     }
 }
