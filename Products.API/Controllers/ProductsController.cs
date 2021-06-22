@@ -83,5 +83,12 @@ namespace Products.API.Controllers
         {
             return Ok(_stockRepository.GetAll());
         }
+
+        [HttpGet]
+        [Route("categories")]
+        public ActionResult<IEnumerable<Stock>> GetCategories()
+        {
+            return Ok(_categoryRepository.GetAll());
+        }
     }
 }

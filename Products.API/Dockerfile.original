@@ -3,11 +3,11 @@
 FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
+EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0-buster-slim AS build
 WORKDIR /src
 COPY ["Products.API/Products.API.csproj", "Products.API/"]
-COPY ["Common/Common.csproj", "Common/"]
 RUN dotnet restore "Products.API/Products.API.csproj"
 COPY . .
 WORKDIR "/src/Products.API"

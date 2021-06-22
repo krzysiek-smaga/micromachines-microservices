@@ -36,8 +36,8 @@ namespace Products.API.Data
 
                 var categories = new Category[]
                 {
-                    new Category { ID = Guid.Parse("00000000-0000-0001-0000-000000000000"), Name = "Car Models"},
-                    new Category { ID = Guid.Parse("00000000-0000-0002-0000-000000000000"), Name = "Plane Models"}
+                    new Category { ID = Guid.Parse("00000000-0000-0001-0000-000000000000"), Name = "CarModels"},
+                    new Category { ID = Guid.Parse("00000000-0000-0002-0000-000000000000"), Name = "PlaneModels"}
                 };
                 Categories.AddRange(categories);
                 SaveChanges();

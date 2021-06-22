@@ -54,18 +54,25 @@ namespace Transactions.API.Controllers
         }
 
         [HttpPost]
-        [Route("amount/{amount}/from/{fromAccountId}/to/{toAccountId}")]
-        public ActionResult<Transaction> Create(int amount, Guid fromAccountId, Guid toAccountId)
+        [Route("transfer")]
+        public ActionResult<Transaction> Create([FromBody] TransactionData transactionData)
         {
             var transaction = new Transaction();
             transaction.TimeStamp = DateTime.Now;
             transaction.Status = TransactionStatus.Unconfirmed;
-            transaction.AccountFromID = fromAccountId;
-            transaction.AccountToID = toAccountId;
-            transaction.Amount = amount;
+            transaction.AccountFromID = transactionData.AccountFromID;
+            transaction.AccountToID = transactionData.AccountToID;
+            transaction.Amount = transactionData.Amount;
+            _logger.LogInformation($"Starting transaction!");
 
-            var accountFrom = _accountRepository.GetSingle(x => x.ID == fromAccountId);
-            var accountTo = _accountRepository.GetSingle(x => x.ID == toAccountId);
+            var accountFrom = _accountRepository.GetSingle(x => x.ID == transactionData.AccountFromID);
+            var accountTo = _accountRepository.GetSingle(x => x.ID == transactionData.AccountToID);
+
+            if (transactionData.userID != accountFrom.UserID)
+            {
+                _logger.LogError($"Account From is not yours!");
+                return BadRequest("Not your account!");
+            }
 
             if (accountFrom == null || accountTo == null)
             {
@@ -76,17 +83,18 @@ namespace Transactions.API.Controllers
 
                 if (accountFrom == null)
                 {
-                    return BadRequest($"Error - AccountFrom with id:{fromAccountId} - doesn't exists!");
+                    _logger.LogError($"Account from doesn't exists");
+                    return BadRequest($"Error - AccountFrom with id:{transactionData.AccountFromID} - doesn't exists!");
                 }
 
                 if (accountTo == null)
                 {
-                    return BadRequest($"Error - AccountTo with id:{toAccountId} - doesn't exists!");
+                    _logger.LogError($"Account to doesn't exists");
+                    return BadRequest($"Error - AccountTo with id:{transactionData.AccountToID} - doesn't exists!");
                 }
             }
 
-
-            if (accountFrom.IsClosed || accountTo.IsClosed || accountFrom.Balance < amount)
+            if (accountFrom.IsClosed || accountTo.IsClosed || accountFrom.Balance < transactionData.Amount)
             {
                 transaction.Status = TransactionStatus.Denied;
 
@@ -95,22 +103,25 @@ namespace Transactions.API.Controllers
 
                 if (accountFrom.IsClosed)
                 {
-                    return BadRequest($"Error - AccountFrom with id:{fromAccountId} - is closed!");
+                    _logger.LogError($"Account from is closed");
+                    return BadRequest($"Error - AccountFrom with id:{transactionData.AccountFromID} - is closed!");
                 }
 
                 if (accountTo.IsClosed)
                 {
-                    return BadRequest($"Error - AccountTo with id:{toAccountId} - is closed!");
+                    _logger.LogError($"Account to is closed");
+                    return BadRequest($"Error - AccountTo with id:{transactionData.AccountToID} - is closed!");
                 }
 
-                if (accountFrom.Balance < amount)
+                if (accountFrom.Balance < transactionData.Amount)
                 {
-                    return BadRequest($"Error - AccountFrom with id:{fromAccountId} - doesn't enough balance on account!");
+                    _logger.LogError($"You don't have enough money on this account");
+                    return BadRequest($"Error - AccountFrom with id:{transactionData.AccountFromID} - doesn't enough balance on account!");
                 }
             }
 
-            accountFrom.Balance -= amount;
-            accountTo.Balance += amount;
+            accountFrom.Balance -= transactionData.Amount;
+            accountTo.Balance += transactionData.Amount;
 
             _accountRepository.Edit(accountFrom);
             _accountRepository.Edit(accountTo);
@@ -121,6 +132,7 @@ namespace Transactions.API.Controllers
             _transactionRepository.Add(transaction);
             _transactionRepository.Save();
 
+            _logger.LogInformation($"Transaction created successfully");
             return CreatedAtAction(nameof(Get), new { id = transaction.ID }, transaction);
         }
 
@@ -141,6 +153,39 @@ namespace Transactions.API.Controllers
             }
 
             return Ok(userTransactions);
+        }
+
+        [HttpGet]
+        [Route("userbalance/{userId}")]
+        public ActionResult<decimal> GetUserBalance(Guid userId)
+        {
+            var userAccounts = _accountRepository.GetAll().Where(x => x.UserID == userId);
+            if (userAccounts == null)
+            {
+                return BadRequest("This user doesn't have account or wrong user ID");
+            }
+
+            decimal userBalance = 0;
+
+            foreach (var account in userAccounts)
+            {
+                userBalance += account.Balance;
+            }
+
+            return Ok(userBalance);
+        }
+
+        [HttpGet]
+        [Route("useraccounts/{userId}")]
+        public ActionResult<IEnumerable<Account>> GetUserAccounts(Guid userId)
+        {
+            var userAccounts = _accountRepository.GetAll().Where(x => x.UserID == userId);
+            if (userAccounts == null)
+            {
+                return BadRequest("This user doesn't have account or wrong user ID");
+            }
+
+            return Ok(userAccounts);
         }
     }
 }
