@@ -25,7 +25,7 @@ namespace Transactions.API.Data
 
                 var accounts = new Account[]
                 {
-                    new Account { ID = Guid.Parse("00000000-0000-0000-0000-000000000000"), Name = "StoreAccount", Balance = 0.00M, IsClosed = false },
+                    new Account { ID = Guid.Parse("00000000-0000-0000-1111-000000000000"), Name = "StoreAccount", Balance = 0.00M, UserID = Guid.Parse("00000000-1111-0000-0000-000000000001"), IsClosed = false },
                     new Account { ID = Guid.Parse("00000000-0000-0000-0001-000000000000"), Name = "Alior", Balance = 1000.00M, UserID = Guid.Parse("00000000-0000-0000-0000-000000000001"), IsClosed = false },
                     new Account { ID = Guid.Parse("00000000-0000-0000-0002-000000000000"), Name = "MBank", Balance = 50.00M, UserID = Guid.Parse("00000000-0000-0000-0000-000000000001"), IsClosed = false },
                     new Account { ID = Guid.Parse("00000000-0000-0000-0003-000000000000"), Name = "Alior", Balance = 200.00M, UserID = Guid.Parse("00000000-0000-0000-0000-000000000002"), IsClosed = false },

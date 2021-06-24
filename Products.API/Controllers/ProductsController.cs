@@ -90,5 +90,15 @@ namespace Products.API.Controllers
         {
             return Ok(_categoryRepository.GetAll());
         }
+
+        [HttpPut]
+        [Route("update_stock")]
+        public ActionResult UpdateStock([FromBody] Stock stock)
+        {
+            _stockRepository.Edit(stock);
+            _stockRepository.Save();
+
+            return Ok(stock);
+        }
     }
 }

@@ -280,5 +280,52 @@ namespace Users.API.Controllers
 
             return BadRequest("Error :)");
         }
+
+        [HttpPost]
+        [Route("{userId}/make_order")]
+        public async Task<ActionResult<Order>> MakeOrder([FromRoute] Guid userId)
+        {
+            var user = _userRepository.GetSingle(x => x.ID == userId);
+
+            if (user == null)
+            {
+                return BadRequest("User doesn't exists");
+            }
+
+            if (user.Basket.Count == 0 || user.Basket == null)
+            {
+                return BadRequest("Basket empty, nothing to order. Add products to basket first");
+            }
+
+            string url = "http://orders.api/orders/make_order/" + userId;
+
+            _httpClient = new HttpClient();
+
+            var basket = new List<ProductQuantity>();
+
+            foreach (var product in user.Basket)
+            {
+                var newProductInBasket = new ProductQuantity();
+                newProductInBasket.ProductID = product.ProductID;
+                newProductInBasket.Quantity = product.Quantity;
+
+                basket.Add(newProductInBasket);
+            }
+
+            user.Basket = new List<ProductQuantity>();
+
+            var json = JsonConvert.SerializeObject(basket);
+            var data = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(url, data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Ok(JsonConvert.DeserializeObject<Order>(content));
+            }
+
+            return BadRequest("Damn! :)");
+        }
     }
 }
